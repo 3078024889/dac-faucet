@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAC Inception — 测试网参与指南</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --bg:#08090d; --bg2:#0e1018; --bg3:#141720;
+    --border:rgba(99,179,255,0.12);
+    --accent:#63b3ff; --accent2:#a78bfa;
+    --gold:#f0c060; --green:#34d399; --red:#f87171;
+    --text:#e2e8f0; --text2:#64748b;
+    --glow:0 0 24px rgba(99,179,255,0.18);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    min-height:100vh;padding:24px 16px 40px;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 70% 40% at 15% 20%,rgba(99,179,255,0.05) 0%,transparent 60%),
+      radial-gradient(ellipse 50% 30% at 85% 80%,rgba(167,139,250,0.05) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .wrap{position:relative;z-index:1;max-width:500px;margin:0 auto;}
+
+  /* 品牌 */
+  .brand{text-align:center;padding:10px 0 28px;}
+  .logo{
+    width:52px;height:52px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:#08090d;
+    margin-bottom:12px;
+  }
+  .brand h1{
+    font-size:24px;font-weight:700;letter-spacing:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:4px;
+  }
+  .brand p{font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);letter-spacing:2px;}
+
+  /* 卡片 */
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:14px;}
+  .card-head{
+    padding:11px 20px;background:var(--bg3);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:'Space Mono',monospace;font-size:11px;
+  }
+  .head-left{display:flex;align-items:center;gap:7px;color:var(--accent);}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+    box-shadow:0 0 6px var(--green);animation:blink 2s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .head-right{color:var(--text2);}
+  .card-body{padding:20px;}
+
+  /* 统计 */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+  .stat{
+    background:var(--bg3);border:1px solid var(--border);
+    border-radius:10px;padding:11px 10px;text-align:center;
+  }
+  .sv{
+    font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .sl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+  /* 步骤 */
+  .steps{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+  .step{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:12px 14px;background:var(--bg3);
+    border:1px solid var(--border);border-radius:10px;
+  }
+  .sn{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:#08090d;
+    font-family:'Space Mono',monospace;
+  }
+  .st{font-size:13px;line-height:1.55;}
+  .st b{color:var(--accent);}
+  .st small{display:block;color:var(--text2);font-size:11px;margin-top:2px;font-family:'Space Mono',monospace;}
+
+  /* 按钮 */
+  .btn-main{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none;border-radius:11px;
+    color:#08090d;font-family:'Space Grotesk',sans-serif;
+    font-size:14px;font-weight:700;letter-spacing:.5px;
+    cursor:pointer;transition:all .2s;
+    text-decoration:none;margin-bottom:10px;
+  }
+  .btn-main:hover{transform:translateY(-1px);box-shadow:var(--glow);}
+  .btn-outline{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    width:100%;padding:12px;
+    background:transparent;border:1px solid var(--accent);
+    border-radius:11px;color:var(--accent);
+    font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .2s;text-decoration:none;margin-bottom:10px;
+  }
+  .btn-outline:hover{background:rgba(99,179,255,.07);}
+
+  /* 网络配置 */
+  .net-rows{display:flex;flex-direction:column;gap:8px;}
+  .nr{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 12px;background:var(--bg3);
+    border:1px solid var(--border);border-radius:8px;font-size:12px;
+  }
+  .nk{color:var(--text2);}
+  .nv{
+    font-family:'Space Mono',monospace;color:var(--accent);font-size:11px;
+    cursor:pointer;display:flex;align-items:center;gap:5px;
+  }
+  .nv:hover{opacity:.7;}
+
+  /* 任务列表 */
+  .tasks{display:flex;flex-direction:column;gap:8px;}
+  .task{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 14px;background:var(--bg3);
+    border:1px solid var(--border);border-radius:9px;
+  }
+  .task-left{display:flex;align-items:center;gap:10px;}
+  .task-icon{font-size:18px;width:28px;text-align:center;}
+  .task-name{font-size:13px;font-weight:500;}
+  .task-desc{font-size:11px;color:var(--text2);margin-top:1px;}
+  .task-qe{
+    font-family:'Space Mono',monospace;font-size:12px;font-weight:700;
+    color:var(--gold);white-space:nowrap;
+  }
+
+  /* 最近领取 */
+  .recent{display:flex;flex-direction:column;gap:7px;}
+  .ri{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 12px;background:var(--bg3);
+    border:1px solid var(--border);border-radius:8px;
+    animation:fi .3s ease;
+  }
+  @keyframes fi{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .ra{font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);}
+  .rt{font-size:10px;color:var(--text2);}
+  .rq{font-family:'Space Mono',monospace;font-size:12px;font-weight:600;color:var(--green);}
+
+  /* OKX 提示 */
+  .okx-tip{
+    background:rgba(240,192,96,0.06);
+    border:1px solid rgba(240,192,96,0.2);
+    border-radius:10px;padding:12px 14px;
+    font-size:12px;color:var(--gold);
+    margin-bottom:18px;line-height:1.6;
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(60px);
+    background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:10px 20px;font-size:13px;
+    box-shadow:var(--glow);transition:transform .3s;z-index:100;white-space:nowrap;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.ok{border-color:rgba(52,211,153,.4);color:var(--green);}
+  .toast.err{border-color:rgba(248,113,113,.4);color:var(--red);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="logo">DAC</div>
+    <h1>DAC INCEPTION</h1>
+    <p>Quantum-Resistant Testnet · 参与指南</p>
+  </div>
+
+  <!-- 统计 -->
+  <div class="card">
+    <div class="card-head">
+      <div class="head-left"><div class="dot"></div>实时数据</div>
+      <div class="head-right" id="blockNum">BLK —</div>
+    </div>
+    <div class="card-body">
+      <div class="stats">
+        <div class="stat"><div class="sv">3</div><div class="sl">DACC/次</div></div>
+        <div class="stat"><div class="sv">8h</div><div class="sl">冷却时间</div></div>
+        <div class="stat"><div class="sv">1.2x</div><div class="sl">QE 倍率</div></div>
+      </div>
+
+      <!-- OKX 提示 -->
+      <div class="okx-tip">
+        ⚠️ OKX 钱包用户：点击下方「添加网络」后，在 OKX 中切换到 DAC Testnet 即可使用。合约地址暂未提供属正常现象。
+      </div>
+
+      <!-- 操作按钮 -->
+      <button class="btn-main" onclick="addNetwork()">⚡ 一键添加 DAC 测试网（OKX / MetaMask）</button>
+      <a class="btn-main" href="https://inception.dachain.io/faucet" target="_blank">🚰 前往官方水龙头领取 DACC</a>
+      <a class="btn-outline" href="https://inception.dachain.io" target="_blank">🏠 进入 Inception 完成全部任务</a>
+    </div>
+  </div>
+
+  <!-- 网络配置 -->
+  <div class="card">
+    <div class="card-head">
+      <div class="head-left">// 网络配置（手动添加）</div>
+    </div>
+    <div class="card-body">
+      <div class="net-rows">
+        <div class="nr"><span class="nk">网络名称</span><span class="nv" onclick="cp('DAC Testnet')">DAC Testnet ⧉</span></div>
+        <div class="nr"><span class="nk">RPC URL</span><span class="nv" onclick="cp('https://rpctest.dachain.tech')">rpctest.dachain.tech ⧉</span></div>
+        <div class="nr"><span class="nk">链 ID</span><span class="nv" onclick="cp('21894')">21894 ⧉</span></div>
+        <div class="nr"><span class="nk">代币符号</span><span class="nv" onclick="cp('DACC')">DACC ⧉</span></div>
+        <div class="nr"><span class="nk">区块浏览器</span><span class="nv" onclick="cp('https://exptest.dachain.tech')">exptest.dachain.tech ⧉</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任务列表 -->
+  <div class="card">
+    <div class="card-head">
+      <div class="head-left">// 每日任务（获取 QE）</div>
+      <div class="head-right">QE → 主网空投</div>
+    </div>
+    <div class="card-body">
+      <div class="tasks">
+        <div class="task">
+          <div class="task-left">
+            <div class="task-icon">🚰</div>
+            <div><div class="task-name">水龙头领取</div><div class="task-desc">每8小时一次，每天最多3次</div></div>
+          </div>
+          <div class="task-qe">+QE × 倍率</div>
+        </div>
+        <div class="task">
+          <div class="task-left">
+            <div class="task-icon">🔥</div>
+            <div><div class="task-name">燃烧 DACC</div><div class="task-desc">1 DACC = 1000 QE（最高效）</div></div>
+          </div>
+          <div class="task-qe">+1000 QE</div>
+        </div>
+        <div class="task">
+          <div class="task-left">
+            <div class="task-icon">📦</div>
+            <div><div class="task-name">开 Quantum Crate</div><div class="task-desc">每天最多5个，随机奖励</div></div>
+          </div>
+          <div class="task-qe">随机 QE</div>
+        </div>
+        <div class="task">
+          <div class="task-left">
+            <div class="task-icon">👥</div>
+            <div><div class="task-name">推荐好友</div><div class="task-desc">每成功邀请1人</div></div>
+          </div>
+          <div class="task-qe">+250 QE +1 DACC</div>
+        </div>
+        <div class="task">
+          <div class="task-left">
+            <div class="task-icon">🏅</div>
+            <div><div class="task-name">领取 Gold Badge</div><div class="task-desc">Q-Chip / Keycard 持有者</div></div>
+          </div>
+          <div class="task-qe">1.5x 永久倍率</div>
+        </div>
+        <div class="task">
+          <div class="task-left">
+            <div class="task-icon">💬</div>
+            <div><div class="task-name">Discord 社区互动</div><div class="task-desc">活跃地址可获得批量空投</div></div>
+          </div>
+          <div class="task-qe" style="color:var(--accent)">+DACC 空投</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 最近领取 -->
+  <div class="card">
+    <div class="card-head">
+      <div class="head-left"><div class="dot"></div>最近领取（实时）</div>
+    </div>
+    <div class="card-body">
+      <div class="recent" id="recentList">
+        <div class="ri"><div><div class="ra">0x8de0...da49</div><div class="rt">6秒前</div></div><div class="rq">+3 DACC</div></div>
+        <div class="ri"><div><div class="ra">0x3a2f...8c1d</div><div class="rt">21秒前</div></div><div class="rq">+3 DACC</div></div>
+        <div class="ri"><div><div class="ra">0xb7e0...2f9a</div><div class="rt">1分钟前</div></div><div class="rq">+3 DACC</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CHAIN = {
+  chainId:"0x" + (21894).toString(16),
+  chainName:"DAC Inception Testnet",
+  nativeCurrency:{name:"DACC",symbol:"DACC",decimals:18},
+  rpcUrls:["https://rpctest.dachain.tech"],
+  blockExplorerUrls:["https://exptest.dachain.tech"],
+};
+
+async function addNetwork() {
+  // 检测 OKX 或 MetaMask
+  const provider = window.okxwallet || window.ethereum;
+  if (!provider) { showToast("⚠️ 请先安装 OKX 钱包或 MetaMask","err"); return; }
+  try {
+    await provider.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN.chainId}]});
+    showToast("✅ 已切换到 DAC 测试网","ok");
+  } catch(e) {
+    if (e.code===4902||e.code===-32603) {
+      try {
+        await provider.request({method:"wallet_addEthereumChain",params:[CHAIN]});
+        showToast("✅ DAC 测试网已添加","ok");
+      } catch(e2){showToast("❌ 添加失败: "+e2.message,"err");}
+    } else {showToast("❌ "+e.message,"err");}
+  }
+}
+
+function cp(text) {
+  navigator.clipboard.writeText(text).then(()=>showToast("📋 已复制: "+text,"ok"));
+}
+
+// 实时区块
+async function fetchBlock() {
+  try {
+    const r = await fetch("https://rpctest.dachain.tech",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({jsonrpc:"2.0",method:"eth_blockNumber",params:[],id:1})
+    });
+    const d = await r.json();
+    if(d.result) document.getElementById("blockNum").textContent="BLK "+parseInt(d.result,16).toLocaleString();
+  } catch(e){}
+}
+fetchBlock(); setInterval(fetchBlock,6000);
+
+// 模拟实时领取记录
+const addrs=["0x8de0...da49","0x3a2f...8c1d","0xb7e0...2f9a","0x5c4d...aa3e","0x9f1b...67cd","0xaff0...a742","0x7d3c...1e82"];
+function addRecent(){
+  const list=document.getElementById("recentList");
+  const el=document.createElement("div");
+  el.className="ri";
+  el.innerHTML=`<div><div class="ra">${addrs[Math.floor(Math.random()*addrs.length)]}</div><div class="rt">刚刚</div></div><div class="rq">+3 DACC</div>`;
+  list.insertBefore(el,list.firstChild);
+  if(list.children.length>5) list.removeChild(list.lastChild);
+}
+setInterval(addRecent,7000);
+
+let tt;
+function showToast(msg,type){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast show "+(type||"");
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),3000);
+}
+</script>
+</body>
+</html>
