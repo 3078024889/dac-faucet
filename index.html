@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAC Faucet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --bg:#08090d;--bg2:#0e1018;--bg3:#141720;
+    --border:rgba(99,179,255,0.12);
+    --accent:#63b3ff;--accent2:#a78bfa;
+    --gold:#f0c060;--green:#34d399;--red:#f87171;
+    --text:#e2e8f0;--text2:#64748b;
+    --glow:0 0 24px rgba(99,179,255,0.2);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    min-height:100vh;display:flex;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 70% 40% at 15% 20%,rgba(99,179,255,0.06) 0%,transparent 60%),
+      radial-gradient(ellipse 50% 30% at 85% 80%,rgba(167,139,250,0.06) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .wrap{position:relative;z-index:1;width:100%;max-width:420px;}
+  .brand{text-align:center;padding-bottom:24px;}
+  .logo{
+    width:50px;height:50px;margin:0 auto 10px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#08090d;
+  }
+  .brand h1{
+    font-size:22px;font-weight:700;letter-spacing:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;
+  }
+  .brand p{font-family:'Space Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:2px;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;}
+  .netbar{
+    padding:10px 20px;background:var(--bg3);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:'Space Mono',monospace;font-size:11px;
+  }
+  .netleft{display:flex;align-items:center;gap:7px;color:var(--accent);}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+    box-shadow:0 0 6px var(--green);animation:blink 2s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .body{padding:22px;}
+  .wallet-box{
+    background:var(--bg3);border:1px solid var(--border);
+    border-radius:12px;padding:16px;margin-bottom:16px;
+  }
+  .wlabel{font-family:'Space Mono',monospace;font-size:10px;color:var(--text2);
+    letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+  .waddr{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);word-break:break-all;}
+  .wbal{
+    font-family:'Space Mono',monospace;font-size:22px;font-weight:700;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:8px;
+  }
+  .wbal-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+  .btn{
+    width:100%;padding:14px;border:none;border-radius:11px;
+    font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+    cursor:pointer;transition:all .2s;
+    display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;
+  }
+  .btn-connect{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#08090d;}
+  .btn-connect:hover{transform:translateY(-1px);box-shadow:var(--glow);}
+  .btn-claim{
+    background:linear-gradient(135deg,#34d399,#059669);
+    color:#fff;font-size:16px;padding:16px;
+  }
+  .btn-claim:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 24px rgba(52,211,153,0.3);}
+  .btn-claim:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .btn-claim.loading{background:var(--bg3);color:var(--accent);border:1px solid var(--border);}
+  .btn-claim.success{background:linear-gradient(135deg,#34d399,#059669);}
+  .btn-claim.cooldown{background:var(--bg3);color:var(--gold);border:1px solid rgba(240,192,96,0.3);}
+  .cdbox{
+    background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.2);
+    border-radius:10px;padding:12px 14px;margin-bottom:12px;display:none;
+  }
+  .cd-row{display:flex;justify-content:space-between;align-items:center;}
+  .cd-lbl{font-size:12px;color:var(--text2);}
+  .cd-timer{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--gold);}
+  .cd-bar{height:3px;background:var(--bg);border-radius:2px;margin-top:8px;overflow:hidden;}
+  .cd-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .5s;}
+  .divider{height:1px;background:var(--border);margin:16px 0;}
+  .txbox{
+    background:var(--bg3);border:1px solid rgba(52,211,153,0.2);
+    border-radius:10px;padding:12px 14px;margin-bottom:12px;display:none;
+  }
+  .tx-lbl{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+  .tx-hash{font-family:'Space Mono',monospace;font-size:11px;color:var(--green);word-break:break-all;cursor:pointer;}
+  .tx-hash:hover{text-decoration:underline;}
+  .log{
+    font-family:'Space Mono',monospace;font-size:11px;
+    background:var(--bg);border:1px solid var(--border);
+    border-radius:8px;padding:12px;max-height:110px;
+    overflow-y:auto;color:var(--text2);line-height:1.8;margin-bottom:12px;
+  }
+  .log .ok{color:var(--green);}
+  .log .info{color:var(--accent);}
+  .log .err{color:var(--red);}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stat{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center;}
+  .sv{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .sl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  .toast{
+    position:fixed;bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(60px);
+    background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:10px 20px;font-size:13px;
+    box-shadow:var(--glow);transition:transform .3s;z-index:100;white-space:nowrap;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.ok{border-color:rgba(52,211,153,.4);color:var(--green);}
+  .toast.err{border-color:rgba(248,113,113,.4);color:var(--red);}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{display:inline-block;animation:spin 1s linear infinite;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="logo">DAC</div>
+    <h1>DAC FAUCET</h1>
+    <p>INCEPTION TESTNET · CHAIN ID 21894</p>
+  </div>
+  <div class="card">
+    <div class="netbar">
+      <div class="netleft"><div class="dot"></div>DAC Inception Testnet</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2)" id="blockNum">BLK —</div>
+    </div>
+    <div class="body">
+      <div class="wallet-box">
+        <div class="wlabel">钱包地址</div>
+        <div class="waddr" id="walletAddr">未连接</div>
+        <div class="wbal" id="walletBal">—</div>
+        <div class="wbal-lbl">DACC 余额</div>
+      </div>
+      <button class="btn btn-connect" id="connectBtn" onclick="connectWallet()">⚡ 连接 OKX / MetaMask 钱包</button>
+      <div class="cdbox" id="cdBox">
+        <div class="cd-row">
+          <div class="cd-lbl">⏳ 冷却中，下次可领</div>
+          <div class="cd-timer" id="cdTimer">—</div>
+        </div>
+        <div class="cd-bar"><div class="cd-fill" id="cdFill" style="width:0%"></div></div>
+      </div>
+      <button class="btn btn-claim" id="claimBtn" onclick="claimFaucet()" disabled>🚰 领取 3 DACC</button>
+      <div class="txbox" id="txBox">
+        <div class="tx-lbl">交易哈希</div>
+        <div class="tx-hash" id="txHash" onclick="openTx()"></div>
+      </div>
+      <div class="log" id="logBox">
+        <span class="info">[DAC]</span> Faucet v3.0 — 动态编码地址参数<br>
+        <span class="info">[DAC]</span> 合约: 0xaff05cbb...fa742<br>
+        <span class="info">[DAC]</span> 等待钱包连接...
+      </div>
+      <div class="divider"></div>
+      <div class="stats">
+        <div class="stat"><div class="sv">3</div><div class="sl">DACC/次</div></div>
+        <div class="stat"><div class="sv" id="claimCount">0</div><div class="sl">今日已领</div></div>
+        <div class="stat"><div class="sv" id="totalClaimed">0</div><div class="sl">累计 DACC</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const RPC_URL  = "https://rpctest.dachain.tech";
+const CHAIN_ID = 21894;
+const CHAIN_HEX = "0x" + CHAIN_ID.toString(16);
+const EXPLORER = "https://exptest.dachain.tech";
+const FAUCET   = "0xaff05cbb58752fa12c73d30b98fc87cac52fa742";
+const COOLDOWN_MS = 8 * 60 * 60 * 1000;
+
+const NETWORK = {
+  chainId: CHAIN_HEX,
+  chainName: "DAC Inception Testnet",
+  nativeCurrency:{name:"DACC",symbol:"DACC",decimals:18},
+  rpcUrls:[RPC_URL],
+  blockExplorerUrls:[EXPLORER],
+};
+
+let provider = null;
+let userAddr  = null;
+let cdInterval = null;
+let lastClaim  = parseInt(localStorage.getItem("dac_last_claim") || "0");
+let totalClaimed = parseInt(localStorage.getItem("dac_total") || "0");
+let todayCount = 0;
+
+const today = new Date().toDateString();
+if (localStorage.getItem("dac_today_date") === today) {
+  todayCount = parseInt(localStorage.getItem("dac_today_count") || "0");
+}
+document.getElementById("totalClaimed").textContent = totalClaimed;
+document.getElementById("claimCount").textContent = todayCount;
+
+// 区块高度
+async function fetchBlock() {
+  try {
+    const r = await fetch(RPC_URL,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({jsonrpc:"2.0",method:"eth_blockNumber",params:[],id:1})
+    });
+    const d = await r.json();
+    if(d.result) document.getElementById("blockNum").textContent="BLK "+parseInt(d.result,16).toLocaleString();
+  } catch(e){}
+}
+fetchBlock(); setInterval(fetchBlock,6000);
+
+// 构建 calldata — 动态注入钱包地址
+function buildCalldata(addr) {
+  // 函数选择器
+  const selector = "57bc3d78";
+
+  // 参数1: recipient address (32字节, 左填充0)
+  const recipient = addr.toLowerCase().replace("0x","").padStart(64,"0");
+
+  // 参数2: 0 (uint256)
+  const param2 = "0".padStart(64,"0");
+
+  // 参数3: 0x0a = 10 (uint256)
+  const param3 = "a".padStart(64,"0");
+
+  // 参数4: 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee (address, 原生代币)
+  const param4 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".padStart(64,"0");
+
+  // 参数5: 0x0429d069189e0000 = 3 DACC (wei)
+  const param5 = "0429d069189e0000".padStart(64,"0");
+
+  // 参数6: offset for bytes (0xe0 = 224)
+  const param6 = "e0".padStart(64,"0");
+
+  // 参数7: offset for bytes2 (0x180 = 384)
+  const param7 = "180".padStart(64,"0");
+
+  // 参数8: bytes data 长度=128 (0x80)
+  const param8 = "80".padStart(64,"0");
+
+  // 参数9-12: bytes data payload (4×32 bytes)
+  const p9  = "0".padStart(64,"0");
+  const p10 = "f".repeat(64); // 0xffff...
+  const p11 = "0".padStart(64,"0");
+  const p12 = "0".padStart(64,"0");
+
+  // 参数13: bytes2 长度=0
+  const param13 = "0".padStart(64,"0");
+
+  return "0x" + selector + recipient + param2 + param3 + param4 +
+    param5 + param6 + param7 + param8 + p9 + p10 + p11 + p12 + param13;
+}
+
+// 连接钱包
+async function connectWallet() {
+  provider = window.okxwallet || window.ethereum;
+  if (!provider) {
+    showToast("请在 OKX 内置浏览器中打开","err");
+    addLog("err","未检测到钱包"); return;
+  }
+  try {
+    addLog("info","正在连接钱包...");
+    const accounts = await provider.request({method:"eth_requestAccounts"});
+    userAddr = accounts[0];
+    await switchNetwork();
+
+    document.getElementById("walletAddr").textContent = userAddr;
+    const btn = document.getElementById("connectBtn");
+    btn.textContent = "✅ " + userAddr.slice(0,8)+"..."+userAddr.slice(-6);
+    btn.style.cssText = "background:rgba(99,179,255,0.1);border:1px solid var(--accent);color:var(--accent)";
+
+    addLog("ok","已连接: "+userAddr.slice(0,12)+"...");
+    await fetchBalance();
+    checkCooldown();
+  } catch(e) {
+    addLog("err","连接失败: "+e.message);
+    showToast("连接失败","err");
+  }
+}
+
+async function switchNetwork() {
+  try {
+    await provider.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_HEX}]});
+    addLog("ok","已切换到 DAC Testnet");
+  } catch(e) {
+    if(e.code===4902||e.code===-32603) {
+      try {
+        await provider.request({method:"wallet_addEthereumChain",params:[NETWORK]});
+        addLog("ok","DAC Testnet 已添加");
+      } catch(e2){ addLog("err","添加网络失败"); }
+    }
+  }
+}
+
+async function fetchBalance() {
+  if(!userAddr) return;
+  try {
+    const r = await fetch(RPC_URL,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({jsonrpc:"2.0",method:"eth_getBalance",params:[userAddr,"latest"],id:1})
+    });
+    const d = await r.json();
+    if(d.result) {
+      const dacc = Number(BigInt(d.result)) / 1e18;
+      document.getElementById("walletBal").textContent = dacc.toFixed(4);
+    }
+  } catch(e){}
+}
+
+function checkCooldown() {
+  const elapsed = Date.now() - lastClaim;
+  if(lastClaim && elapsed < COOLDOWN_MS) {
+    startCooldownUI(COOLDOWN_MS - elapsed);
+  } else {
+    document.getElementById("claimBtn").disabled = false;
+    document.getElementById("claimBtn").textContent = "🚰 领取 3 DACC";
+    document.getElementById("claimBtn").className = "btn btn-claim";
+    document.getElementById("cdBox").style.display = "none";
+  }
+}
+
+function startCooldownUI(remaining) {
+  document.getElementById("claimBtn").disabled = true;
+  document.getElementById("claimBtn").className = "btn btn-claim cooldown";
+  document.getElementById("cdBox").style.display = "block";
+  clearInterval(cdInterval);
+  let rem = remaining;
+  function tick() {
+    if(rem<=0){ clearInterval(cdInterval); checkCooldown(); return; }
+    const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+    const ts=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+    document.getElementById("cdTimer").textContent=ts;
+    document.getElementById("cdFill").style.width=((COOLDOWN_MS-rem)/COOLDOWN_MS*100).toFixed(1)+"%";
+    document.getElementById("claimBtn").textContent="⏳ 冷却中 "+ts;
+    rem-=1000;
+  }
+  tick(); cdInterval=setInterval(tick,1000);
+}
+
+// 领取
+async function claimFaucet() {
+  if(!userAddr){showToast("请先连接钱包","err");return;}
+
+  const btn=document.getElementById("claimBtn");
+  btn.disabled=true;
+  btn.className="btn btn-claim loading";
+  btn.innerHTML='<span class="spin">⟳</span> 发送交易中...';
+
+  // 动态构建 calldata，注入当前钱包地址
+  const calldata = buildCalldata(userAddr);
+
+  addLog("info","构建 calldata...");
+  addLog("info","recipient: "+userAddr.slice(0,12)+"...");
+  addLog("info","amount: 3 DACC (0x0429d069189e0000)");
+
+  try {
+    const txHash = await provider.request({
+      method:"eth_sendTransaction",
+      params:[{
+        from:  userAddr,
+        to:    FAUCET,
+        value: "0x0",
+        data:  calldata,
+        gas:   "0x493E0", // 300000 gas，足够
+      }]
+    });
+
+    addLog("ok","交易已提交: "+txHash.slice(0,18)+"...");
+    addLog("info","等待确认...");
+
+    document.getElementById("txHash").textContent = txHash;
+    document.getElementById("txHash").dataset.hash = txHash;
+    document.getElementById("txBox").style.display = "block";
+
+    const receipt = await waitForReceipt(txHash);
+
+    if(receipt && receipt.status==="0x1") {
+      addLog("ok","✅ 领取成功！+3 DACC");
+      btn.className="btn btn-claim success";
+      btn.textContent="✅ 领取成功 +3 DACC";
+
+      lastClaim=Date.now();
+      localStorage.setItem("dac_last_claim",lastClaim);
+      todayCount++;
+      totalClaimed+=3;
+      localStorage.setItem("dac_today_date",new Date().toDateString());
+      localStorage.setItem("dac_today_count",todayCount);
+      localStorage.setItem("dac_total",totalClaimed);
+      document.getElementById("claimCount").textContent=todayCount;
+      document.getElementById("totalClaimed").textContent=totalClaimed;
+
+      showToast("✅ 成功领取 3 DACC！","ok");
+      setTimeout(fetchBalance,3000);
+      setTimeout(()=>startCooldownUI(COOLDOWN_MS),2000);
+    } else if(receipt && receipt.status==="0x0") {
+      addLog("err","链上 revert — 可能还在冷却或合约限制");
+      btn.disabled=false;
+      btn.className="btn btn-claim";
+      btn.textContent="🚰 领取 3 DACC";
+      showToast("❌ 合约拒绝，请稍后再试","err");
+    } else {
+      addLog("err","确认超时，请在浏览器查看交易状态");
+      btn.disabled=false;
+      btn.className="btn btn-claim";
+      btn.textContent="🚰 领取 3 DACC";
+    }
+  } catch(e) {
+    addLog("err","错误: "+(e.message||"").slice(0,80));
+    btn.disabled=false;
+    btn.className="btn btn-claim";
+    btn.textContent="🚰 领取 3 DACC";
+    if(e.code===4001) showToast("已取消","err");
+    else showToast("❌ "+(e.message||"失败").slice(0,40),"err");
+  }
+}
+
+async function waitForReceipt(txHash,max=40) {
+  for(let i=0;i<max;i++) {
+    await sleep(2000);
+    try {
+      const r=await fetch(RPC_URL,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({jsonrpc:"2.0",method:"eth_getTransactionReceipt",params:[txHash],id:1})
+      });
+      const d=await r.json();
+      if(d.result) return d.result;
+    } catch(e){}
+  }
+  return null;
+}
+
+function openTx() {
+  const h=document.getElementById("txHash").dataset.hash;
+  if(h) window.open(EXPLORER+"/tx/"+h,"_blank");
+}
+
+function addLog(type,msg) {
+  const box=document.getElementById("logBox");
+  const line=document.createElement("div");
+  line.innerHTML=`<span class="${type}">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+  box.appendChild(line);
+  box.scrollTop=box.scrollHeight;
+}
+
+let tt;
+function showToast(msg,type) {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast show "+(type||"");
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+window.addEventListener("load",()=>{
+  if(lastClaim&&(Date.now()-lastClaim)<COOLDOWN_MS)
+    addLog("info","检测到本地冷却记录，连接钱包后自动显示");
+});
+</script>
+</body>
+</html>
