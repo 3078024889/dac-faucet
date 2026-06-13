@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAC Faucet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  :root{--bg:#08090d;--bg2:#0e1018;--bg3:#141720;--border:rgba(99,179,255,0.12);--accent:#63b3ff;--accent2:#a78bfa;--gold:#f0c060;--green:#34d399;--red:#f87171;--text:#e2e8f0;--text2:#64748b;--glow:0 0 24px rgba(99,179,255,0.2);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 70% 40% at 15% 20%,rgba(99,179,255,0.06) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 85% 80%,rgba(167,139,250,0.06) 0%,transparent 60%);pointer-events:none;}
+  .wrap{position:relative;z-index:1;width:100%;max-width:420px;}
+  .brand{text-align:center;padding-bottom:24px;}
+  .logo{width:50px;height:50px;margin:0 auto 10px;background:linear-gradient(135deg,var(--accent),var(--accent2));clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#08090d;}
+  .brand h1{font-size:22px;font-weight:700;letter-spacing:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;}
+  .brand p{font-family:'Space Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:2px;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;}
+  .netbar{padding:10px 20px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-family:'Space Mono',monospace;font-size:11px;}
+  .netleft{display:flex;align-items:center;gap:7px;color:var(--accent);}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .body{padding:22px;}
+  .wallet-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
+  .wlabel{font-family:'Space Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+  .waddr{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);word-break:break-all;min-height:16px;}
+  .wbal{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:8px;}
+  .wbal-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+  .info-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:none;}
+  .ib-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;}
+  .ib-row:last-child{margin-bottom:0;}
+  .ib-key{color:var(--text2);font-family:'Space Mono',monospace;font-size:10px;}
+  .ib-val{font-family:'Space Mono',monospace;font-size:11px;color:var(--green);}
+  .btn{width:100%;padding:14px;border:none;border-radius:11px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;}
+  .btn-connect{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#08090d;}
+  .btn-connect:hover{transform:translateY(-1px);box-shadow:var(--glow);}
+  .btn-claim{background:linear-gradient(135deg,#34d399,#059669);color:#fff;font-size:16px;padding:16px;}
+  .btn-claim:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 24px rgba(52,211,153,0.3);}
+  .btn-claim:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .btn-claim.loading{background:var(--bg3);color:var(--accent);border:1px solid var(--border);}
+  .btn-claim.success{background:linear-gradient(135deg,#34d399,#059669);}
+  .divider{height:1px;background:var(--border);margin:16px 0;}
+  .txbox{background:var(--bg3);border:1px solid rgba(52,211,153,0.2);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:none;}
+  .tx-lbl{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+  .tx-hash{font-family:'Space Mono',monospace;font-size:11px;color:var(--green);word-break:break-all;cursor:pointer;}
+  .tx-hash:hover{text-decoration:underline;}
+  .log{font-family:'Space Mono',monospace;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:120px;overflow-y:auto;color:var(--text2);line-height:1.8;margin-bottom:12px;}
+  .log .ok{color:var(--green);}.log .info{color:var(--accent);}.log .err{color:var(--red);}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stat{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center;}
+  .sv{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .sl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;box-shadow:var(--glow);transition:transform .3s;z-index:100;white-space:nowrap;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.ok{border-color:rgba(52,211,153,.4);color:var(--green);}
+  .toast.err{border-color:rgba(248,113,113,.4);color:var(--red);}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{display:inline-block;animation:spin 1s linear infinite;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="logo">DAC</div>
+    <h1>DAC FAUCET</h1>
+    <p>INCEPTION TESTNET · CHAIN ID 21894</p>
+  </div>
+  <div class="card">
+    <div class="netbar">
+      <div class="netleft"><div class="dot"></div>DAC Inception Testnet</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2)" id="blockNum">BLK —</div>
+    </div>
+    <div class="body">
+      <div class="wallet-box">
+        <div class="wlabel">钱包地址</div>
+        <div class="waddr" id="walletAddr">未连接</div>
+        <div class="wbal" id="walletBal">—</div>
+        <div class="wbal-lbl">DACC 余额</div>
+      </div>
+
+      <div class="info-box" id="infoBox">
+        <div class="ib-row"><span class="ib-key">上次成功</span><span class="ib-val" id="lastTime">—</span></div>
+        <div class="ib-row"><span class="ib-key">历史成功</span><span class="ib-val" id="succCount">—</span></div>
+        <div class="ib-row"><span class="ib-key">累计获得</span><span class="ib-val" id="totalEarned">—</span></div>
+      </div>
+
+      <button class="btn btn-connect" id="connectBtn" onclick="connectWallet()">⚡ 连接 OKX / MetaMask</button>
+      <button class="btn btn-claim" id="claimBtn" onclick="claimFaucet()" disabled>🚰 领取 3 DACC</button>
+
+      <div class="txbox" id="txBox">
+        <div class="tx-lbl">交易哈希</div>
+        <div class="tx-hash" id="txHash" onclick="openTx()"></div>
+      </div>
+
+      <div class="log" id="logBox">
+        <span class="info">[DAC]</span> Faucet v8 — value=0, gasPrice=168525<br>
+        <span class="info">[DAC]</span> 等待钱包连接...
+      </div>
+
+      <div class="divider"></div>
+      <div class="stats">
+        <div class="stat"><div class="sv">3</div><div class="sl">DACC/次</div></div>
+        <div class="stat"><div class="sv" id="succStat">0</div><div class="sl">成功次数</div></div>
+        <div class="stat"><div class="sv" id="earnStat">0</div><div class="sl">已获 DACC</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const RPC      = "https://rpctest.dachain.tech";
+const EXP_API  = "https://exptest.dachain.tech/api";
+const EXPLORER = "https://exptest.dachain.tech";
+const CHAIN_ID = 21894;
+const CHAIN_HEX = "0x" + CHAIN_ID.toString(16);
+const FAUCET   = "0xaff05cbb58752fa12c73d30b98fc87cac52fa742";
+
+// 与成功交易完全一致的参数
+// nonce68: gasPrice=168526, gas=187989, value=0 (用户发出)
+const GAS_PRICE = "0x292CE"; // 168526
+const GAS_LIMIT = "0x2DF35"; // 187989
+
+const NETWORK = {
+  chainId: CHAIN_HEX,
+  chainName: "DAC Inception Testnet",
+  nativeCurrency: {name:"DACC",symbol:"DACC",decimals:18},
+  rpcUrls: [RPC],
+  blockExplorerUrls: [EXPLORER],
+};
+
+let provider = null;
+let userAddr  = null;
+let succCount = 0;
+
+async function fetchBlock() {
+  try {
+    const r = await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({jsonrpc:"2.0",method:"eth_blockNumber",params:[],id:1}),
+      signal:AbortSignal.timeout(5000)});
+    const d = await r.json();
+    if(d.result) document.getElementById("blockNum").textContent="BLK "+parseInt(d.result,16).toLocaleString();
+  }catch(e){}
+}
+fetchBlock(); setInterval(fetchBlock,10000);
+
+async function fetchHistory(addr) {
+  try {
+    const r = await fetch(`${EXP_API}?module=account&action=txlist&address=${addr}&sort=desc&page=1&offset=20`,
+      {signal:AbortSignal.timeout(8000)});
+    const d = await r.json();
+    if(d.status==="1") {
+      const ok = d.result.filter(tx=>
+        tx.to&&tx.to.toLowerCase()===FAUCET.toLowerCase()&&
+        tx.isError==="0"&&tx.txreceipt_status==="1");
+      succCount = ok.length;
+      document.getElementById("succCount").textContent = succCount+"次";
+      document.getElementById("totalEarned").textContent = (succCount*3)+" DACC";
+      document.getElementById("succStat").textContent = succCount;
+      document.getElementById("earnStat").textContent = succCount*3;
+      document.getElementById("lastTime").textContent = ok.length>0
+        ? new Date(parseInt(ok[0].timeStamp)*1000).toLocaleString("zh-CN")
+        : "首次领取";
+      document.getElementById("infoBox").style.display="block";
+      addLog("ok","历史成功 "+succCount+"次，共 "+(succCount*3)+" DACC");
+    }
+  }catch(e){ addLog("info","历史查询失败，不影响领取"); }
+}
+
+async function connectWallet() {
+  provider = window.okxwallet || window.ethereum;
+  if(!provider){showToast("请在OKX内置浏览器中打开","err");return;}
+  try {
+    addLog("info","连接钱包...");
+    const accounts = await provider.request({method:"eth_requestAccounts"});
+    userAddr = accounts[0];
+    document.getElementById("walletAddr").textContent = userAddr;
+    const btn = document.getElementById("connectBtn");
+    btn.textContent="✅ "+userAddr.slice(0,8)+"..."+userAddr.slice(-6);
+    btn.style.cssText="background:rgba(99,179,255,0.1);border:1px solid var(--accent);color:var(--accent);margin-bottom:10px;padding:12px;border-radius:11px;width:100%;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:default;display:flex;align-items:center;justify-content:center;";
+
+    try {
+      await provider.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_HEX}]});
+      addLog("ok","已切换 DAC Testnet");
+    }catch(e){
+      if(e.code===4902||e.code===-32603){
+        await provider.request({method:"wallet_addEthereumChain",params:[NETWORK]});
+        addLog("ok","DAC Testnet 已添加");
+      }
+    }
+
+    // 查余额
+    try {
+      const r=await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({jsonrpc:"2.0",method:"eth_getBalance",params:[userAddr,"latest"],id:1}),
+        signal:AbortSignal.timeout(5000)});
+      const d=await r.json();
+      if(d.result) document.getElementById("walletBal").textContent=(Number(BigInt(d.result))/1e18).toFixed(4);
+    }catch(e){}
+
+    await fetchHistory(userAddr);
+
+    document.getElementById("claimBtn").disabled=false;
+    addLog("ok","准备就绪！");
+  }catch(e){
+    addLog("err","连接失败: "+(e.message||"").slice(0,50));
+    showToast("连接失败","err");
+  }
+}
+
+function buildCalldata(addr) {
+  const s="57bc3d78";
+  const rec=addr.toLowerCase().replace("0x","").padStart(64,"0");
+  const p2="0".padStart(64,"0");
+  const p3="a".padStart(64,"0");
+  const p4="eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".padStart(64,"0");
+  const p5="0429d069189e0000".padStart(64,"0");
+  const p6="e0".padStart(64,"0");
+  const p7="180".padStart(64,"0");
+  const p8="80".padStart(64,"0");
+  const p9="0".padStart(64,"0");
+  const p10="f".repeat(64);
+  const p11="0".padStart(64,"0");
+  const p12="0".padStart(64,"0");
+  const p13="0".padStart(64,"0");
+  return "0x"+s+rec+p2+p3+p4+p5+p6+p7+p8+p9+p10+p11+p12+p13;
+}
+
+async function claimFaucet() {
+  if(!userAddr){showToast("请先连接钱包","err");return;}
+
+  const btn=document.getElementById("claimBtn");
+  btn.disabled=true;
+  btn.className="btn btn-claim loading";
+  btn.innerHTML='<span class="spin">⟳</span> 等待钱包确认...';
+
+  addLog("info","发送交易 value=0x0, gasPrice=168526...");
+
+  try {
+    const txHash = await provider.request({
+      method:"eth_sendTransaction",
+      params:[{
+        from:     userAddr,
+        to:       FAUCET,
+        value:    "0x0",        // 用户不需要付 DACC
+        data:     buildCalldata(userAddr),
+        gas:      GAS_LIMIT,    // 187989
+        gasPrice: GAS_PRICE,    // 168526
+      }]
+    });
+
+    addLog("ok","交易已发送: "+txHash.slice(0,20)+"...");
+    addLog("info","等待链上确认...");
+
+    document.getElementById("txHash").textContent=txHash;
+    document.getElementById("txHash").dataset.hash=txHash;
+    document.getElementById("txBox").style.display="block";
+    btn.innerHTML='<span class="spin">⟳</span> 链上确认中...';
+
+    const receipt = await pollReceipt(txHash,60);
+
+    if(receipt&&receipt.status==="0x1") {
+      addLog("ok","🎉 领取成功！+3 DACC");
+      btn.className="btn btn-claim success";
+      btn.textContent="✅ 成功 +3 DACC";
+      succCount++;
+      document.getElementById("succStat").textContent=succCount;
+      document.getElementById("earnStat").textContent=succCount*3;
+      showToast("✅ 成功领取 3 DACC！","ok");
+      setTimeout(async()=>{
+        try{
+          const r=await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({jsonrpc:"2.0",method:"eth_getBalance",params:[userAddr,"latest"],id:1}),
+            signal:AbortSignal.timeout(5000)});
+          const d=await r.json();
+          if(d.result) document.getElementById("walletBal").textContent=(Number(BigInt(d.result))/1e18).toFixed(4);
+        }catch(e){}
+      },4000);
+      setTimeout(()=>{
+        btn.className="btn btn-claim";
+        btn.textContent="🚰 领取 3 DACC";
+        btn.disabled=false;
+      },3000);
+    } else if(receipt&&receipt.status==="0x0") {
+      addLog("err","合约拒绝 — 请稍后重试");
+      showToast("❌ 合约拒绝","err");
+      btn.className="btn btn-claim";
+      btn.textContent="🚰 领取 3 DACC";
+      btn.disabled=false;
+    } else {
+      addLog("info","确认超时，点哈希查看状态");
+      btn.className="btn btn-claim";
+      btn.textContent="🚰 重试领取";
+      btn.disabled=false;
+    }
+  }catch(e){
+    addLog("err",(e.message||"").slice(0,80));
+    btn.className="btn btn-claim";
+    btn.textContent="🚰 领取 3 DACC";
+    btn.disabled=false;
+    if(e.code===4001) showToast("已取消","err");
+    else showToast("❌ "+(e.message||"").slice(0,40),"err");
+  }
+}
+
+async function pollReceipt(txHash,maxTries) {
+  for(let i=0;i<maxTries;i++) {
+    await sleep(2000);
+    try {
+      const r=await fetch(`${EXP_API}?module=transaction&action=gettxreceiptstatus&txhash=${txHash}`,
+        {signal:AbortSignal.timeout(5000)});
+      const d=await r.json();
+      if(d.status==="1"&&d.result){
+        if(d.result.status==="1") return {status:"0x1"};
+        if(d.result.status==="0") return {status:"0x0"};
+      }
+    }catch(e){}
+    try {
+      const r=await fetch(RPC,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({jsonrpc:"2.0",method:"eth_getTransactionReceipt",params:[txHash],id:1}),
+        signal:AbortSignal.timeout(5000)});
+      const d=await r.json();
+      if(d.result) return d.result;
+    }catch(e){}
+    if(i%5===4) addLog("info","等待... "+((i+1)*2)+"s");
+  }
+  return null;
+}
+
+function openTx(){const h=document.getElementById("txHash").dataset.hash;if(h)window.open(EXPLORER+"/tx/"+h,"_blank");}
+function addLog(type,msg){
+  const box=document.getElementById("logBox");
+  const line=document.createElement("div");
+  line.innerHTML=`<span class="${type}">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+  box.appendChild(line);box.scrollTop=box.scrollHeight;
+}
+let tt;
+function showToast(msg,type){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.className="toast show "+(type||"");
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),3500);
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+</script>
+</body>
+</html>
